@@ -102,13 +102,24 @@ def d_Frechet (P, Q):
 
     return solver.frechet()
 
-
 def process(P, Q, unic_s):
     data = [P, Q]
 
     names = ["P", "Q"]
 
     dist, d_index = d_Frechet(P, Q)
+
+    tmp_P = P.copy()
+    tmp_Q = Q.copy()
+    while tmp_P.__contains__(P[d_index[0]]):
+        tmp_P.remove(P[d_index[0]])
+
+    while tmp_Q.__contains__(Q[d_index[1]]):
+        tmp_Q.remove(Q[d_index[1]])
+
+
+    tmp_dist, tmp_d_index = d_Frechet(tmp_P, tmp_Q)
+
 
     fig, ax = plt.subplots(nrows=1, ncols=1, sharey=True)
     ax.set_xlabel("x")
@@ -123,18 +134,20 @@ def process(P, Q, unic_s):
         ax.plot(x, y, label=names[i])
     if d_index[0] > -1 and d_index[1] > -1:
         ax.plot([P[d_index[0]][0], Q[d_index[1]][0]], [P[d_index[0]][1], Q[d_index[1]][1]], label="dist")
-
+    if tmp_d_index[0] > -1 and tmp_d_index[1] > -1:
+        ax.plot([tmp_P[tmp_d_index[0]][0], tmp_Q[tmp_d_index[1]][0]], [tmp_P[tmp_d_index[0]][1], tmp_Q[tmp_d_index[1]][1]], label="dist_2")
 
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 0.9, box.height])
 
     fig.legend()
-    fig.savefig("Frechet_dist%s.png"%unic_s, dpi=300, format='png', bbox_inches='tight')
+    fig.savefig("Frechet_dist%s.png" % unic_s, dpi=300, format='png', bbox_inches='tight')
 
     fig.show()
     plt.close(fig)
 
     print(dist, d_index)
+    print(tmp_dist, tmp_d_index)
 
 
 if __name__ == "__main__":
@@ -142,7 +155,6 @@ if __name__ == "__main__":
     A1 = [[0, 0], [4, 2], [6, 5], [12, 6], [15, 7], [15, 10], [18, 13]]
     B1 = [[1, 1], [2, 5], [7, 7], [8, 12], [13, 14], [15, 16]]
     process(A1, B1, "1")
-
 
     A2 = [[2, 2], [3, 4], [2, 7], [5, 6], [9, 8], [8, 5], [10, 1], [6, 3], [2, 2]]
     B2 = [[12, 1], [10, 3], [6, 6], [9, 7], [10, 9], [12, 6], [15, 5], [13, 3], [12, 1]]
