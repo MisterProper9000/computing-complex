@@ -18,7 +18,10 @@ is_need_plot(10) = false;    %обзор интегральной светимости
 is_need_plot(11) = false;    % x = b / A
 is_need_plot(12) = false;    % x = (A' * A)^(-1) * A' * b
 is_need_plot(13) = true;    % tolsolvty
-is_need_plot(14) = true;    % графики Ax, sup_b, inf_b для каждой итерации
+is_need_plot(14) = false;    % графики Ax, sup_b, inf_b для каждой итерации
+is_need_plot(15) = false;    % графики полученного решения x_i от i
+is_need_plot(16) = true;    % оцнка числа обусловленности матрицы А
+
 input_file_index = 37000;
 input_file_name = strcat("data\", num2str(37000), "_SPD16x16.mat");
 input_time_period = 000162;
@@ -484,19 +487,64 @@ end
 b = (sup_b + inf_b)/2;
 A = hord_matrix;
 
+
 %x = b / A
-if(is_need_plot(11))     
-    x1 = b'/A';
+if(is_need_plot(11)) 
+   
+    b_tmp = b
+    x1 = b'/A'
+    figure()
+    hold on;
+    grid on  
+    plot(x1, "o");
+    ylabel("x_i")
+    xlabel("i")
+    figure()
+    hold on;
+    grid on;
+    hist(x1);
+    ylabel("numder")
+    xlabel("x_i")
+    title("x = b'/A'")
+    
+    b_tmp = b
+    x11 = A\b;
+    figure()
+    hold on;
+    grid on  
+    plot(x11, "o");
+    ylabel("x_i")
+    xlabel("i")
+    figure()
+    hold on;
+    grid on;
+    hist(x11);
+    ylabel("numder")
+    xlabel("x_i")
+    title("x = b\A")
+            
 end
 
 %x = (A'A) * A' * b
 if(is_need_plot(12))
-    x2 = inv((A'*A)) *A' *b;
+    disp(strcat("cond(A) = ", num2str(cond(A))));
+
+    disp(strcat("cond(A'A) = ", num2str(cond(A'*A))));
+    x2 = inv((A'*A)) *A' *b; 
     lambda = eig(A'*A);
     figure()
     hist(lambda)  
     title("собственные значения матрицы А'A")
+    ylabel("numder")
+    xlabel("lambda")
+    title("x = inv((A'*A)) *A' *b")
+    
+    ind = find(lambda > 0.2);
+    disp(strcat("numder of lambda > 0.2: ", num2str(length(ind))));
+    
 end
+
+
 %tolsolvty
 if(is_need_plot(13))
     b_sup_tmp = sup_b;
@@ -528,6 +576,8 @@ if(is_need_plot(13))
         plot(x', plot_b_inf_sorted');
         plot(x', plot_b_sup_sorted')
         legend("Ax", "inf b", "sup b")
+        ylabel("value")
+        xlabel("x_i")
     end
     
     if(tolmax < 0)
@@ -560,10 +610,35 @@ if(is_need_plot(13))
             plot(x', plot_b_inf_sorted');
             plot(x', plot_b_sup_sorted')
             legend("Ax", "inf b", "sup b")
+            ylabel("value")
+            xlabel("x_i")
         end
     end
+    %графтк полученного решения x_i от i
+    if(is_need_plot(15))
+            figure()
+            hold on;
+            grid on;
+            plot(argmax, "o");
+            ylabel("x_i")
+            xlabel("i")
+            title("решение tolsolvty")
+            figure()
+            title("гистограмма решения tolsolvty")
+            hold on;
+            grid on;
+           	hist(argmax);
+            ylabel("numder")
+            xlabel("x_i")
+    end
 end
+%%
+%оценка числа обусловленности матрицы А
+%радиус элементов матрицы А - 10% от их величины
+A_inf = A * 0.9;
+A_sup = A * 1.1;
 
+my_HeurMinCond(A_inf, A_sup);
 
 
 
