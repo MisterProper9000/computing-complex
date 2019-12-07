@@ -1,11 +1,15 @@
-function [result] = my_HeurMinCond(A_inf, A_sup)
+function [result] = my_HeurMinCond(A_inf, A_sup, iter_number)
   
 %   определяем размеры данной матрицы 
 m = size(A_inf,1); 
 n = size(A_inf,2);   
  
 %   задаём количество случайных бросаний в реализуемом алгоритме 
-NN = 10; 
+if(nargin >= 3)
+    NN = iter_number; 
+else
+    NN = 10;
+end
 
 %   инициализируем угловые матрицы для A 
 Matr1 = ones(m,n); 
@@ -17,7 +21,7 @@ MinCond = Inf;
   
   
 for k = 1:NN 
-  
+
     %   случайно порождаем целочисленную матрицу EPM из нулей и 
     %   единиц, тех же размеров,  что  и  A  (интервал случайных 
     %   целочисленных значений указывается первым аргументом randi) 
@@ -54,6 +58,6 @@ end
 result = MinCond;
 
 %   выводим найденный минимум чисел обусловленности 
-disp(MinCond); 
+%disp(MinCond); 
 end
   

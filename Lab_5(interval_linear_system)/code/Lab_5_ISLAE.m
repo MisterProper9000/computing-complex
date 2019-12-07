@@ -17,10 +17,12 @@ is_need_plot(9) = false;    %легенда для графиков лучей и пересечений для всех п
 is_need_plot(10) = false;    %обзор интегральной светимости
 is_need_plot(11) = false;    % x = b / A
 is_need_plot(12) = false;    % x = (A' * A)^(-1) * A' * b
-is_need_plot(13) = true;    % tolsolvty
+is_need_plot(13) = false;    % tolsolvty
 is_need_plot(14) = false;    % графики Ax, sup_b, inf_b для каждой итерации
 is_need_plot(15) = false;    % графики полученного решения x_i от i
-is_need_plot(16) = true;    % оцнка числа обусловленности матрицы А
+is_need_plot(16) = true;    % оценка числа обусловленности матрицы А и вычисление IVE
+is_need_plot(17) = false;    % вычисление IVE интервальной матрицы А
+
 
 input_file_index = 37000;
 input_file_name = strcat("data\", num2str(37000), "_SPD16x16.mat");
@@ -560,24 +562,17 @@ if(is_need_plot(13))
         figure()
         hold on;
         grid on;    
-    
-        x = zeros(length(A_inf), 1);
-        h = length(argmax);   
-    
-        x(1:h) = argmax;
-        [x, ind] = sort(x);
-        plot_A = A_inf * argmax;
-        plot_A_sorted = plot_A(ind);
-        plot_b_inf_sorted = b_sup_tmp(ind);
-        plot_b_sup_sorted = b_inf_tmp(ind);
-    
-    
-        plot(x', plot_A_sorted');
-        plot(x', plot_b_inf_sorted');
-        plot(x', plot_b_sup_sorted')
+        % т.к. сейчас А - не интервальная матрица, то (A_inf == A_sup)
+        % и для вычисления значения можем взять любую
+        plot_A = A_sup * argmax;
+        x_axis = 1:length(b_sup_tmp);
+        plot(x_axis, plot_A');
+        plot(x_axis, b_inf_tmp')
+        plot(x_axis, b_sup_tmp');
         legend("Ax", "inf b", "sup b")
         ylabel("value")
-        xlabel("x_i")
+        xlabel("i")
+        title("первое решение tolsolvty");
     end
     
     if(tolmax < 0)
@@ -592,26 +587,20 @@ if(is_need_plot(13))
         disp(strcat("tolmax = ", num2str(tolmax)));
         % графики Ax, sup_b, inf_b для каждой итерации
         if(is_need_plot(14))
-            figure()
+           figure()
             hold on;
-            grid on;
-        
-            x = zeros(length(A_inf), 1);
-            h = length(argmax);
-
-            x(1:h) = argmax;
-            [x, ind] = sort(x);
-            plot_A = A_inf * argmax;
-            plot_A_sorted = plot_A(ind);
-            plot_b_inf_sorted = b_sup_tmp(ind);
-            plot_b_sup_sorted = b_inf_tmp(ind);
-    
-            plot(x', plot_A_sorted');
-            plot(x', plot_b_inf_sorted');
-            plot(x', plot_b_sup_sorted')
+            grid on;    
+            % т.к. сейчас А - не интервальная матрица, то (A_inf == A_sup)
+            % и для вычисления значения можем взять любую
+            plot_A = A_sup * argmax;
+            x_axis = 1:length(b_sup_tmp);
+            plot(x_axis, plot_A');
+            plot(x_axis, b_inf_tmp')
+            plot(x_axis, b_sup_tmp');
             legend("Ax", "inf b", "sup b")
             ylabel("value")
-            xlabel("x_i")
+            xlabel("i")
+            title("второе( с расширенным b) решение tolsolvty");
         end
     end
     %графтк полученного решения x_i от i
@@ -631,18 +620,64 @@ if(is_need_plot(13))
             ylabel("numder")
             xlabel("x_i")
     end
+    
+    cond_A = my_HeurMinCond(A_inf, A_sup);
+    A_IVE = my_IVE(A_inf, A_sup,  b_inf_tmp,  b_sup_tmp, tolmax, argmax, length(argmax));
 end
+
+   
+
 %%
 %оценка числа обусловленности матрицы А
-%радиус элементов матрицы А - 10% от их величины
-A_inf = A * 0.9;
-A_sup = A * 1.1;
-
-my_HeurMinCond(A_inf, A_sup);
-
-
-
-
+if(is_need_plot(16))
+    %радиус элементов матрицы А - 10% от их величины
+    matrix_radius = 0.1;
+    A_inf_1 = A * (1 -  matrix_radius);
+    A_sup_1 = A * (1 +  matrix_radius);
+    b_sup_tmp_1 = sup_b;
+    b_inf_tmp_1 = inf_b;
+    
+    for i = 10:10:100
+        
+        cond_A = my_HeurMinCond(A_inf_1, A_sup_1, i);  
+        disp(strcat("rad = ", num2str(matrix_radius)," : HeurMinCond(A, ", num2str(i), ") = ", num2str(cond_A)));
+    end
+i = 1000;
+cond_A = my_HeurMinCond(A_inf_1, A_sup_1, i);  
+        disp(strcat("rad = ", num2str(matrix_radius)," : HeurMinCond(A, ", num2str(i), ") = ", num2str(cond_A)));
+    iter = 100;
+    for rad = 0.1:0.05:0.5
+        A_inf_1 = A * (1 -  matrix_radius);
+        A_sup_1 = A * (1 +  matrix_radius);
+        b_sup_tmp_1 = sup_b;
+        b_inf_tmp_1 = inf_b;
+        cond_A = my_HeurMinCond(A_inf_1, A_sup_1, iter);        
+        disp(strcat("rad = ", num2str(rad), " : HeurMinCond(A, ", num2str(iter), ") = ", num2str(cond_A)));
+    end
+   
+end
+%%
+%вычисление IVE интервальной матрицы А
+if(is_need_plot(17))
+    %радиус элементов матрицы А - 10% от их величины
+    A_inf_1 = A * 0.9;
+    A_sup_1 = A * 1.1;
+    b_sup_tmp_1 = sup_b;
+    b_inf_tmp_1 = inf_b;
+    
+    cond_A = my_HeurMinCond(A_inf_1, A_sup_1);
+    
+    [tolmax_1, argmax_1, envs_1, ccode_1] =  tolsolvty(A_inf_1, A_sup_1, b_inf_tmp_1,  b_sup_tmp_1);
+    if(tolmax_1 < 0)
+        shift_1 = -tolmax_1;
+        b_sup_tmp_1 = b_sup_tmp_1 + shift_1;
+        b_inf_tmp_1 = b_inf_tmp_1 - shift_1;
+        [tolmax_1, argmax_1, envs_1, ccode_1] =  tolsolvty(A_inf_1, A_sup_1, b_inf_tmp_1,  b_sup_tmp_1);
+    end
+    
+    A_IVE_1 = my_IVE(A_inf_1, A_sup_1,  b_inf_tmp_1,  b_sup_tmp_1, tolmax_1, argmax_1, length(argmax_1));
+    
+end
 
 
 
