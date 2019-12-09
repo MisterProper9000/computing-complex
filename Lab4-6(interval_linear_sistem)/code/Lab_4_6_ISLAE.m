@@ -27,10 +27,10 @@ is_need_plot(16) = false;    % оценка числа обусловленности матрицы А и вычислен
 is_need_plot(17) = false;    % вычисление IVE интервальной матрицы А
 %--------------      lab 6      --------------
 % для 6 лабы нужен is_need_plot(8)= true
-is_need_plot(18) = true;    % гистограмма x решения ЗЛП
-is_need_plot(20) = true;    % график x решения ЗЛП
-is_need_plot(19) = true;    % график w решения ЗЛП
-is_need_plot(21) = true;    % график значений Ax решения ЗЛП
+is_need_plot(18) = false;    % гистограмма x решения ЗЛП
+is_need_plot(20) = false;    % график x решения ЗЛП
+is_need_plot(19) = false;    % график w решения ЗЛП
+is_need_plot(21) = false;    % график значений Ax решения ЗЛП
 
 input_file_index = 37000;
 input_file_name = strcat("data\", num2str(37000), "_SPD16x16.mat");
@@ -745,7 +745,7 @@ if(is_need_plot(19))
     ylabel('x');
 end
 
-%график ц решения ЗЛП
+%график w решения ЗЛП
 if(is_need_plot(20))
     x_axis = 1:N;
     figure();
